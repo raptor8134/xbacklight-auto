@@ -1,6 +1,5 @@
 #include <stdio.h>				//
 #include <stdlib.h>				//
-#include <sys/param.h>			// MIN()/MAX() functions
 #include <fcntl.h>				// open() function
 #include <sys/ioctl.h>			// Error handling
 #include <errno.h>				// ^^
@@ -17,8 +16,9 @@
 
 // initialize the buffer pointer and buffer iterator
 uint8_t *buffer;
+int totalpixels = PXWIDTH*PXHEIGHT;
 
-// find out if we have any screw-ups
+// find out if we have any screw-ups while doing ioctl()
 static int xioctl(int fd, int request, void *arg) {
 	int r;
 	do r = ioctl(fd, request, arg);
@@ -26,11 +26,16 @@ static int xioctl(int fd, int request, void *arg) {
 	return r;
 }
 
-float getbrightness(uint8_t* buffer) {
+int getbrightness(uint8_t* buffer) {
 	// TODO get the brightness from the pointer
 	// Note: 4 bytes = 2 pixels
-	//for (int i, i<)
-	return 50; // lets not break the program in testing
+	int n, returnval, bignumber = 0;
+	for (int i=0; i<totalpixels; i+=2) {
+		bignumber+=buffer[i];
+	}
+	returnval = bignumber/totalpixels;
+	printf("%i\n", returnval);
+	return returnval; // lets not break the program in testing
 }
 
 int main(int argc, char **argv) { //TODO add command line options
@@ -75,7 +80,7 @@ int main(int argc, char **argv) { //TODO add command line options
     }
 
 	// main loop
-	while (1==1) {
+	for (;;) {
 		// Query buffer(s) 
 	    struct v4l2_buffer buf;
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -119,12 +124,13 @@ int main(int argc, char **argv) { //TODO add command line options
 		 * These are sufficient for now, but I want to add a more
 		 * native method for changing the xbacklight state later
 		 */
+		
 		brightness = getbrightness(buffer);
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
 		sleep(3);
 	}
-
+	// Never gets used lmao
 	return 0;
 }
