@@ -7,6 +7,7 @@
 #include <sys/mman.h>			// mmap() function
 #include <unistd.h>				// sleep() function 
 #include <stdint.h>				// uint8_t for the buffer
+#include <string.h>				// memset() function
 
 #include <linux/videodev2.h>	// The main V4L2 header
 
@@ -14,8 +15,8 @@
 #define PXWIDTH 320				// Capture resolution, change this to match 
 #define PXHEIGHT 240			// the output of `v4l2-ctl -d <n> --all | grep Bounds`
 
-// initialize the buffer pointer
-uint8_t *buffer;	
+// initialize the buffer pointer and buffer iterator
+uint8_t *buffer;
 
 // find out if we have any screw-ups
 static int xioctl(int fd, int request, void *arg) {
@@ -25,9 +26,15 @@ static int xioctl(int fd, int request, void *arg) {
 	return r;
 }
 
+float getbrightness(uint8_t* buffer) {
+	// TODO get the brightness from the pointer
+	// Note: 4 bytes = 2 pixels
+	//for (int i, i<)
+	return 50; // lets not break the program in testing
+}
+
 int main(int argc, char **argv) { //TODO add command line options
-	// Things we use later
-	char cmd[50];
+	char cmd[64];
 	int brightness;
 
 	// Open the video device
@@ -67,29 +74,29 @@ int main(int argc, char **argv) { //TODO add command line options
         return 1;
     }
 
-	// Query buffer 
-    struct v4l2_buffer buf = {0};
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
-    buf.index = 0;
-    if(-1 == xioctl(fd, VIDIOC_QBUF, &buf)) {
-        perror("Querying buffer");
-        return 1;
-    }
-    buffer = mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-
-	// Handle a capture error before the loop starts
-	if (-1 == xioctl(fd, VIDIOC_STREAMON, &buf.type)) {
-		perror("Error in start capture");
-		return 1;
-	}
-
 	// main loop
 	while (1==1) {
-		// Get a frame
+		// Query buffer(s) 
+	    struct v4l2_buffer buf;
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = V4L2_MEMORY_MMAP;
+		buf.index = 0; 
+		if(-1 == xioctl(fd, VIDIOC_QBUF, &buf)) {
+			perror("Querying buffer");
+			return 1;
+		}
+		buffer = mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+
+		// Consoom frame and get excited for next frame
+		if (-1 == xioctl(fd, VIDIOC_STREAMON, &buf.type)) {
+			perror("Starting capture");
+			return 1;
+		}
+
 		fd_set fds;
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
+
 		struct timeval tv = {0};
 		tv.tv_sec = 2;
 		int r = select(fd+1, &fds, NULL, NULL, &tv);
@@ -99,24 +106,24 @@ int main(int argc, char **argv) { //TODO add command line options
 			return 1;
 	    }
 
-		// This guy is causing a hangup, dunno why
-		// Ok i think its the thingy in the while loop in xioctl
     	if(-1 == xioctl(fd, VIDIOC_DQBUF, &buf)) {
 			perror("Retrieving frame");
 			return 1;
     	}
 
-		//TODO
-		// Take a YUYV format string and make it into an average brightness
+		if (-1 == xioctl(fd, VIDIOC_STREAMOFF, &buf.type)) {
+			perror("Stopping capture");
+		}
 
-		brightness = 50;
-
-		// These are sufficient for now, but I want to add a more
-		// native method for changing the xbacklight state later
+		/* TODO
+		 * These are sufficient for now, but I want to add a more
+		 * native method for changing the xbacklight state later
+		 */
+		brightness = getbrightness(buffer);
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
-		sleep(10);
+		sleep(3);
 	}
 
 	return 0;
