@@ -2,9 +2,10 @@
 
 #include <stdio.h>				//
 #include <stdlib.h>				//
+#include <getopt.h>				// 
+#include <sys/ioctl.h>			// 
 #include <fcntl.h>				// open() function
-#include <sys/ioctl.h>			// Error handling
-#include <errno.h>				// ^^
+#include <errno.h>				// Error handling
 #include <sys/mman.h>			// mmap() function
 #include <unistd.h>				// sleep() function 
 #include <stdint.h>				// uint8_t for the buffer
@@ -16,9 +17,11 @@
 #define PXWIDTH 320				// Capture resolution, change this to match 
 #define PXHEIGHT 240			// the output of `v4l2-ctl -d <n> --all | grep Bounds`
 
-// initialize the buffer pointer and buffer iterator
+// Global variables
 uint8_t *buffer;
-int totalpixels = PXWIDTH*PXHEIGHT;
+int totalpixels = PXWIDTH*PXHEIGHT, minbright = 5, time = 5;
+float multiplier = 0.5;
+static int oneshot_flag, help_flag;
 
 // find out if we have any screw-ups while doing ioctl()
 static int xioctl(int fd, int request, void *arg) {
@@ -31,15 +34,64 @@ static int xioctl(int fd, int request, void *arg) {
 // Get brightness of image from YUYV buffer
 int getbrightness(uint8_t* buffer) {
 	int n, returnval, bignumber = 0;
-	for (int i=0; i<totalpixels; i+=2) {
+	for (int i = 0; i < totalpixels; i+=2) {
 		bignumber+=buffer[i];
 	}
-	return bignumber/totalpixels;
+	returnval = bignumber/totalpixels * multiplier; 
+	if (returnval < minbright) {
+		returnval = minbright;
+	}
+	//printf("%i\n", returnval); // For testing
+	return returnval;
 }
 
-int main(int argc, char **argv) { //TODO add command line options
+int main(int argc, char **argv) {
 	char cmd[64];
-	int brightness;
+	int c, brightness;
+
+	// Get options
+	for (;;) {
+
+		static struct option long_options[] = 
+		{
+			{"help"			, no_argument, &help_flag	, 1},
+			{"oneshot"		, no_argument, &oneshot_flag, 1},
+			{"minimum"		, required_argument, 0, 'm'},
+			{"multiplier"	, required_argument, 0, 'x'},
+			{"time"			, required_argument, 0, 't'},
+		};
+
+		int option_index = 0;
+		c = getopt_long(argc, argv, "m:t:x:oh", long_options, &option_index);
+
+		if (c == -1) { break; }
+
+		switch(c) {
+			case 0:		//do nothing
+				break;
+			case 't':	// time
+				time = atoi(optarg);
+				break;
+			case 'x':	//multiplier
+				multiplier *=atof(optarg);
+				break;
+			case 'm':	//minbright	
+				minbright = atoi(optarg);
+				break;
+			case 'o': // oneshot
+				oneshot_flag = 1;
+				break;
+			case 'h': // help
+				help_flag = 1;
+				break;
+			default:
+				abort();
+		}
+	}
+
+	if (oneshot_flag == 1) {
+		time = 0;
+	}
 
 	// Open the video device
 	int fd = open(VDEV, O_RDWR);
@@ -79,8 +131,8 @@ int main(int argc, char **argv) { //TODO add command line options
     }
 
 	// main loop
-	for (;;) {
-		// Query buffer(s) 
+	do {
+		// Query buffer 
 	    struct v4l2_buffer buf;
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
@@ -125,8 +177,10 @@ int main(int argc, char **argv) { //TODO add command line options
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
-		sleep(5);
+		sleep(time);
 	}
+	while (oneshot_flag != 1);
+
 	// Never gets used lmao
 	return 0;
 }
