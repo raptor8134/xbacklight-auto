@@ -1,3 +1,5 @@
+/* Big thanks to https://gist.github.com/maxlapshin/1253534 for most of the v4l2 stuff */
+
 #include <stdio.h>				//
 #include <stdlib.h>				//
 #include <fcntl.h>				// open() function
@@ -26,16 +28,13 @@ static int xioctl(int fd, int request, void *arg) {
 	return r;
 }
 
+// Get brightness of image from YUYV buffer
 int getbrightness(uint8_t* buffer) {
-	// TODO get the brightness from the pointer
-	// Note: 4 bytes = 2 pixels
 	int n, returnval, bignumber = 0;
 	for (int i=0; i<totalpixels; i+=2) {
 		bignumber+=buffer[i];
 	}
-	returnval = bignumber/totalpixels;
-	printf("%i\n", returnval);
-	return returnval; // lets not break the program in testing
+	return bignumber/totalpixels;
 }
 
 int main(int argc, char **argv) { //TODO add command line options
@@ -120,16 +119,13 @@ int main(int argc, char **argv) { //TODO add command line options
 			perror("Stopping capture");
 		}
 
-		/* TODO
-		 * These are sufficient for now, but I want to add a more
-		 * native method for changing the xbacklight state later
-		 */
-		
+		/* TODO These are sufficient for now, but I want to add a more
+		 native method for changing the xbacklight state later */
 		brightness = getbrightness(buffer);
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
-		sleep(3);
+		sleep(5);
 	}
 	// Never gets used lmao
 	return 0;
