@@ -19,8 +19,8 @@
 
 // Global variables
 uint8_t *buffer;
-int totalpixels = PXWIDTH*PXHEIGHT, minbright = 5, time = 5;
-float multiplier = 0.5;
+int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5;
+float multiplier = 1;
 static int oneshot_flag, help_flag;
 
 // find out if we have any screw-ups while doing ioctl()
@@ -32,22 +32,34 @@ static int xioctl(int fd, int request, void *arg) {
 }
 
 // Get brightness of image from YUYV buffer
-int getbrightness(uint8_t* buffer) {
-	int n, returnval, bignumber = 0;
+int getbrightness() {
+	int returnval, bignumber = 0;
 	for (int i = 0; i < totalpixels; i+=2) {
 		bignumber+=buffer[i];
 	}
-	returnval = bignumber/totalpixels * multiplier; 
-	if (returnval < minbright) {
+	returnval = (bignumber/totalpixels - 8 + minbright) * multiplier; 
+	if (returnval <= 0) {
 		returnval = minbright;
 	}
 	//printf("%i\n", returnval); // For testing
 	return returnval;
 }
 
+void help() {
+	printf("\
+usage: xbacklight-auto [options]\n\
+  options:\n\
+    -h | --help		display help\n\
+    -m | --minimum	minimum possible brightness\n\
+    -o | --oneshot	sample once and exit\n\
+    -t | --time		time between samples\n\
+    -x | --multiplier	multiplier on the final brightness\n\
+");
+}
+
 int main(int argc, char **argv) {
 	char cmd[64];
-	int c, brightness, offset;
+	int c, brightness, offset = 0;
 	FILE *xstatecmd;
 	float xstate;
 
@@ -91,10 +103,15 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	if (help_flag == 1) {
+		help();
+		return 0;
+	}
+
 	if (oneshot_flag == 1) {
 		time = 0;
 	}
-
+	
 	// Open the video device
 	int fd = open(VDEV, O_RDWR);
 	if (fd == -1) {
@@ -175,7 +192,7 @@ int main(int argc, char **argv) {
 
 		/*TODO These are sufficient for now, but I want to add a more
 		 native method for changing the xbacklight state later*/
-		brightness = getbrightness(buffer) + offset;
+		brightness = getbrightness() + offset;
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
@@ -184,8 +201,8 @@ int main(int argc, char **argv) {
 		// Saves what you do with the brightness keys as an offset from the cam value
 		xstatecmd = popen("/usr/bin/xbacklight -get", "r");
 		fscanf(xstatecmd, "%f", &xstate);
-		offset = (int)(xstate - brightness);
-	}
+		offset = xstate - brightness - offset;
+	}	
 	while (oneshot_flag != 1);
 
 	// Never gets used lmao

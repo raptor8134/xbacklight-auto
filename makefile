@@ -1,9 +1,9 @@
 CC=gcc
-CFLAGS=-Wall -Wpedantic.
+CFLAGS=
 DEPS= stdio.h stdlib.h fcntl.h sys/ioctl.h errno.h sys/mman.h unistd.h stdint.h string.h linux/videodev2.h
 
 all:
-	$(CC) -o xbacklight-auto xbacklight-auto.c
+	$(CC) -o xbacklight-auto xbacklight-auto.c $(CFLAGS)
 test:
 	@ for header in $(DEPS); do printf "found "; ls /usr/include/$$header; done
 	@ echo "All dependencies satisfied." 
