@@ -2,8 +2,8 @@
 
 #include <stdio.h>				//
 #include <stdlib.h>				//
-#include <getopt.h>				// 
-#include <sys/ioctl.h>			// 
+#include <sys/ioctl.h>			// interface with V4L2 
+#include <getopt.h>				// get command line options
 #include <fcntl.h>				// open() function
 #include <errno.h>				// Error handling
 #include <sys/mman.h>			// mmap() function
@@ -11,7 +11,7 @@
 #include <stdint.h>				// uint8_t for the buffer
 #include <string.h>				// memset() function
 
-#include <linux/videodev2.h>	// The main V4L2 header
+#include <linux/videodev2.h>	// The main V4L2 header (camera api functions)
 
 #define VDEV "/dev/video0"		// The video device you want to capture from 
 #define PXWIDTH 320				// Capture resolution, change this to match 
@@ -47,7 +47,9 @@ int getbrightness(uint8_t* buffer) {
 
 int main(int argc, char **argv) {
 	char cmd[64];
-	int c, brightness;
+	int c, brightness, offset;
+	FILE *xstatecmd;
+	float xstate;
 
 	// Get options
 	for (;;) {
@@ -81,7 +83,7 @@ int main(int argc, char **argv) {
 			case 'o': // oneshot
 				oneshot_flag = 1;
 				break;
-			case 'h': // help
+			case 'h': // TODO Add help 
 				help_flag = 1;
 				break;
 			default:
@@ -171,13 +173,18 @@ int main(int argc, char **argv) {
 			perror("Stopping capture");
 		}
 
-		/* TODO These are sufficient for now, but I want to add a more
-		 native method for changing the xbacklight state later */
-		brightness = getbrightness(buffer);
+		/*TODO These are sufficient for now, but I want to add a more
+		 native method for changing the xbacklight state later*/
+		brightness = getbrightness(buffer) + offset;
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
 		sleep(time);
+
+		// Saves what you do with the brightness keys as an offset from the cam value
+		xstatecmd = popen("/usr/bin/xbacklight -get", "r");
+		fscanf(xstatecmd, "%f", &xstate);
+		offset = (int)(xstate - brightness);
 	}
 	while (oneshot_flag != 1);
 

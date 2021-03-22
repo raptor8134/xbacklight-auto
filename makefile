@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Wpedantic.
-DEPS=
+DEPS= stdio.h stdlib.h fcntl.h sys/ioctl.h errno.h sys/mman.h unistd.h stdint.h string.h linux/videodev2.h
 
 all:
 	$(CC) -o xbacklight-auto xbacklight-auto.c
