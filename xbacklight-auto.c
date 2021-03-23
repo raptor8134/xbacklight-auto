@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 	char cmd[64];
 	int c, brightness, offset = 0;
 	FILE *xstatecmd;
-	float xstate;
+	float xstate1, xstate2;
 
 	// Get options
 	for (;;) {
@@ -196,12 +196,16 @@ int main(int argc, char **argv) {
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
+		// Sample xbacklight state
+		xstatecmd = popen("xbacklight -get", "r");
+		fscanf(xstatecmd, "%f", &xstate1);
+
 		sleep(time);
 
-		// Saves what you do with the brightness keys as an offset from the cam value
-		xstatecmd = popen("/usr/bin/xbacklight -get", "r");
-		fscanf(xstatecmd, "%f", &xstate);
-		offset = xstate - brightness - offset;
+		// Sample state again and diff to get manual input 
+		xstatecmd = popen("xbacklight -get", "r");
+		fscanf(xstatecmd, "%f", &xstate2);
+		offset = xstate2 - xstate1 + offset;
 	}	
 	while (oneshot_flag != 1);
 
