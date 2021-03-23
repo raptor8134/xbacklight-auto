@@ -1,7 +1,8 @@
+NAME=xbacklight-auto
 CC=gcc
 CFLAGS=
 PREFIX=/usr/bin/
-NAME=xbacklight-auto
+DESTDIR=
 DEPS= stdio.h stdlib.h sys/ioctl.h getopt.h fcntl.h errno.h sys/mman.h unistd.h stdint.h string.h linux/videodev2.h
 all:
 	$(CC) xbacklight-auto.c -o $(NAME) $(CFLAGS)
