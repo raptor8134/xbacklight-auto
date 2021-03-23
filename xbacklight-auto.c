@@ -1,5 +1,4 @@
-/* Big thanks to https://gist.github.com/maxlapshin/1253534 for most of the v4l2 stuff */
-
+/* Big thanks to https://gist.github.com/maxlapshin/1253534 for most of the V4L2 stuff */
 #include <stdio.h>				//
 #include <stdlib.h>				//
 #include <sys/ioctl.h>			// interface with V4L2 
@@ -13,9 +12,9 @@
 
 #include <linux/videodev2.h>	// The main V4L2 header (camera api functions)
 
-#define VDEV "/dev/video0"		// The video device you want to capture from 
-#define PXWIDTH 320				// Capture resolution, change this to match 
-#define PXHEIGHT 240			// the output of `v4l2-ctl -d <n> --all | grep Bounds`
+#define VDEV "/dev/video0"		// The video device you want to capture from  
+#define PXWIDTH 320				// Capture resolution, change this to match the output 
+#define PXHEIGHT 240			// of `v4l2-ctl -d <n> --all | grep Bounds` if it fails
 
 // Global variables
 uint8_t *buffer;
@@ -95,7 +94,7 @@ int main(int argc, char **argv) {
 			case 'o': // oneshot
 				oneshot_flag = 1;
 				break;
-			case 'h': // TODO Add help 
+			case 'h': // help 
 				help_flag = 1;
 				break;
 			default:
