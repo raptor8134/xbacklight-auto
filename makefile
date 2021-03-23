@@ -1,6 +1,5 @@
 CC=gcc
 CFLAGS=
-DESTDIR=
 NAME=xbacklight-auto
 DEPS= stdio.h stdlib.h sys/ioctl.h getopt.h fcntl.h errno.h sys/mman.h unistd.h stdint.h string.h linux/videodev2.h
 all:
