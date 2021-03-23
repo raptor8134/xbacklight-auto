@@ -11,6 +11,6 @@ test:
 clean: 
 	@rm $(NAME)
 install:
-	@install $(NAME) $(DESTDIR)$(PREFIX)$(NAME)
+	@install $(NAME) $(DESTDIR)/$(PREFIX)/$(NAME)
 uninstall:
-	@rm $(DESTDIR)$(PREFIX)$(NAME)
+	@rm $(DESTDIR)/$(PREFIX)/$(NAME)
