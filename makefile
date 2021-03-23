@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=
+DESTDIR=/usr/bin
 NAME=xbacklight-auto
 DEPS= stdio.h stdlib.h sys/ioctl.h getopt.h fcntl.h errno.h sys/mman.h unistd.h stdint.h string.h linux/videodev2.h
 all:
@@ -10,6 +11,6 @@ test:
 clean: 
 	@rm ./$(NAME)
 install:
-	@install ./$(NAME) $(DESTDIR)/usr/bin/xbacklight-auto
+	@install ./$(NAME) $(DESTDIR)/$(NAME)
 uninstall:
-	@rm $(DESTDIR)/usr/bin/$(NAME)
+	@rm $(DESTDIR)/$(NAME)
