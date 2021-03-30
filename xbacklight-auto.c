@@ -58,7 +58,7 @@ usage: xbacklight-auto [options]\n\
 
 int main(int argc, char **argv) {
 	char cmd[64];
-	int c, brightness, offset = 0;
+	int c, brightness, offset = 1;
 	FILE *xstatecmd;
 	float xstate1, xstate2;
 
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 
 		/*TODO These are sufficient for now, but I want to add a more
 		 native method for changing the xbacklight state later*/
-		brightness = getbrightness() + offset;
+		brightness = getbrightness()*offset;
 		sprintf(cmd, "xbacklight -set %i%%", brightness);
 		system(cmd);
 
@@ -204,7 +204,9 @@ int main(int argc, char **argv) {
 		// Sample state again and diff to get manual input 
 		xstatecmd = popen("xbacklight -get", "r");
 		fscanf(xstatecmd, "%f", &xstate2);
-		offset = xstate2 - xstate1 + offset;
+
+		// Change the offset to a multiplier, to work better at low brightness
+		offset = xstate2/(xstate1/offset);
 	}	
 	while (oneshot_flag != 1);
 
