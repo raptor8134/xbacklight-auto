@@ -56,7 +56,6 @@ float getbrightness() {
 	if (returnval <= 0) {
 		returnval = minbright;
 	}
-	//printf("%f\n", returnval); // For testing
 	return returnval;
 }
 
@@ -227,8 +226,6 @@ int main(int argc, char **argv) {
 		// get offset as a multiplier
 		xstate = getbacklight();
 		offset = xstate/(brightness/offset);
-
-		printf("%f\t%f\t%f\n", brightness, xstate, offset);
 	}	
 	while (oneshot_flag != 1);
 
