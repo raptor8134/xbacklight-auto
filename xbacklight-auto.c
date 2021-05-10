@@ -20,6 +20,7 @@ uint8_t *buffer;
 int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5;
 float multiplier = 1;
 static int oneshot_flag, help_flag;
+char *device;
 
 // find out if we have any screw-ups while doing ioctl()
 static int xioctl(int fd, int request, void *arg) {
@@ -63,22 +64,17 @@ void help() {
 usage: xbacklight-auto [options]\n\
   options:\n\
     -h | --help		display help\n\
-    -m | --minimum	minimum possible brightness\n\
-    -o | --oneshot	sample once and exit\n\
-    -t | --time		time between samples\n\
-    -x | --multiplier	multiplier on the final brightness\n\
     -d | --device	video device to capture from (default /dev/video0)\n\
+    -m | --minimum	minimum possible brightness\n\
+    -o | --oneshot	run once and exit\n\
+    -t | --time		time between samples/sets (works best when ≥1)\n\
+    -x | --multiplier	multiplier on the set brightness\n\
 ");
 }
 
-int main(int argc, char **argv) {
-	char *device;
-	int c, brightness, offset = 1;
-	float xstate1, xstate2;
-
-	// Get options
+void getoptions(int argc, char** argv) {
+	int c;
 	for (;;) {
-
 		static struct option long_options[] = 
 		{
 			{"help"			, no_argument, &help_flag	, 1},
@@ -119,6 +115,13 @@ int main(int argc, char **argv) {
 				abort();
 		}
 	}
+}
+
+int main(int argc, char **argv) {
+	float brightness, offset, xstate1, xstate2;
+
+	// Get options
+	getoptions(argc, argv);
 
 	if (help_flag == 1) {
 		help();
@@ -228,7 +231,7 @@ int main(int argc, char **argv) {
 		// Change the offset to a multiplier, to work better at low brightness
 		offset = xstate2/(xstate1/offset);
 
-		printf("%f\t%f\t%f\n", xstate1, xstate2, offset);
+		//printf("%f\t%f\t%f\n", xstate1, xstate2, offset);
 	}	
 	while (oneshot_flag != 1);
 
