@@ -12,7 +12,6 @@
 
 #include <linux/videodev2.h>	// The main V4L2 header (camera api functions)
 
-#define VDEV "/dev/video0"		// The video device you want to capture from  
 #define PXWIDTH 320				// Capture resolution, change this to match the output 
 #define PXHEIGHT 240			// of `v4l2-ctl -d <n> --all | grep Bounds` if it fails
 
@@ -68,11 +67,12 @@ usage: xbacklight-auto [options]\n\
     -o | --oneshot	sample once and exit\n\
     -t | --time		time between samples\n\
     -x | --multiplier	multiplier on the final brightness\n\
+    -d | --device	video device to capture from (default /dev/video0)\n\
 ");
 }
 
 int main(int argc, char **argv) {
-	char cmd[64];
+	char *device;
 	int c, brightness, offset = 1;
 	float xstate1, xstate2;
 
@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
 			{"minimum"		, required_argument, 0, 'm'},
 			{"multiplier"	, required_argument, 0, 'x'},
 			{"time"			, required_argument, 0, 't'},
+			{"device"		, required_argument, 0, 'd'},
 		};
 
 		int option_index = 0;
@@ -108,6 +109,9 @@ int main(int argc, char **argv) {
 			case 'o': // oneshot
 				oneshot_flag = 1;
 				break;
+			case 'd': // oneshot
+				device = optarg;
+				break;
 			case 'h': // help 
 				help_flag = 1;
 				break;
@@ -124,9 +128,13 @@ int main(int argc, char **argv) {
 	if (oneshot_flag == 1) {
 		time = 0;
 	}
+
+	if (device == NULL) {
+		device = "/dev/video0";
+	}
 	
 	// Open the video device
-	int fd = open(VDEV, O_RDWR);
+	int fd = open(device, O_RDWR);
 	if (fd == -1) {
 		perror("Error opening device");
 		return 1;
