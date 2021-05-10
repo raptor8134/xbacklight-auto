@@ -46,8 +46,9 @@ void setbacklight(float value) {
 }
 
 // Get brightness of image from YUYV buffer
-int getbrightness() {
-	int returnval, bignumber = 0;
+float getbrightness() {
+	int bignumber = 0;
+	float returnval;
 	for (int i = 0; i < totalpixels; i+=2) {
 		bignumber+=buffer[i];
 	}
@@ -55,7 +56,7 @@ int getbrightness() {
 	if (returnval <= 0) {
 		returnval = minbright;
 	}
-	//printf("%i\n", returnval); // For testing
+	//printf("%f\n", returnval); // For testing
 	return returnval;
 }
 
@@ -63,12 +64,12 @@ void help() {
 	printf("\
 usage: xbacklight-auto [options]\n\
   options:\n\
-    -h | --help		display help\n\
-    -d | --device	video device to capture from (default /dev/video0)\n\
-    -m | --minimum	minimum possible brightness\n\
-    -o | --oneshot	run once and exit\n\
-    -t | --time		time between samples/sets (works best when ≥1)\n\
-    -x | --multiplier	multiplier on the set brightness\n\
+    -h | --help                    display this help\n\
+    -d | --device </dev/videoN>    video device to capture from (default /dev/video0)\n\
+    -m | --minimum <percentage>    minimum possible brightness\n\
+    -o | --oneshot                 run once and exit\n\
+    -t | --time <seconds>          time between samples/sets (works best when ≥1)\n\
+    -x | --multiplier              multiplier on the set brightness (defaults to 1)\n\
 ");
 }
 
@@ -118,7 +119,7 @@ void getoptions(int argc, char** argv) {
 }
 
 int main(int argc, char **argv) {
-	float brightness, offset, xstate1, xstate2;
+	float brightness, xstate, offset = 1;
 
 	// Get options
 	getoptions(argc, argv);
@@ -216,22 +217,18 @@ int main(int argc, char **argv) {
 
 		/*TODO These are sufficient for now, but I want to add a more
 		 native method for changing the xbacklight state later*/
+
+		// get and set brightness
 		brightness = getbrightness()*offset;
-
 		setbacklight(brightness);
-
-		// Sample xbacklight state
-		xstate1 = getbacklight();
 
 		sleep(time);
 
-		// Sample state again and diff to get manual input 
-		xstate2 = getbacklight();
+		// get offset as a multiplier
+		xstate = getbacklight();
+		offset = xstate/(brightness/offset);
 
-		// Change the offset to a multiplier, to work better at low brightness
-		offset = xstate2/(xstate1/offset);
-
-		//printf("%f\t%f\t%f\n", xstate1, xstate2, offset);
+		printf("%f\t%f\t%f\n", brightness, xstate, offset);
 	}	
 	while (oneshot_flag != 1);
 
