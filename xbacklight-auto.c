@@ -30,6 +30,21 @@ static int xioctl(int fd, int request, void *arg) {
 	return r;
 }
 
+float getbacklight() {
+	FILE *pipe = popen("xbacklight -get", "r");
+	char *temp = malloc(16);
+	fscanf(pipe, "%s", temp);
+	float retval = atof(temp);
+	pclose(pipe);
+	return retval;
+}
+
+void setbacklight(float value) {
+	char cmd[64];
+	sprintf(cmd, "xbacklight -set %f", value);
+	system(cmd);
+}
+
 // Get brightness of image from YUYV buffer
 int getbrightness() {
 	int returnval, bignumber = 0;
@@ -59,7 +74,6 @@ usage: xbacklight-auto [options]\n\
 int main(int argc, char **argv) {
 	char cmd[64];
 	int c, brightness, offset = 1;
-	FILE *xstatecmd;
 	float xstate1, xstate2;
 
 	// Get options
@@ -192,21 +206,21 @@ int main(int argc, char **argv) {
 		/*TODO These are sufficient for now, but I want to add a more
 		 native method for changing the xbacklight state later*/
 		brightness = getbrightness()*offset;
-		sprintf(cmd, "xbacklight -set %i%%", brightness);
-		system(cmd);
+
+		setbacklight(brightness);
 
 		// Sample xbacklight state
-		xstatecmd = popen("xbacklight -get", "r");
-		fscanf(xstatecmd, "%f", &xstate1);
+		xstate1 = getbacklight();
 
 		sleep(time);
 
 		// Sample state again and diff to get manual input 
-		xstatecmd = popen("xbacklight -get", "r");
-		fscanf(xstatecmd, "%f", &xstate2);
+		xstate2 = getbacklight();
 
 		// Change the offset to a multiplier, to work better at low brightness
 		offset = xstate2/(xstate1/offset);
+
+		printf("%f\t%f\t%f\n", xstate1, xstate2, offset);
 	}	
 	while (oneshot_flag != 1);
 
