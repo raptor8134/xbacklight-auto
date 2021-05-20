@@ -15,11 +15,9 @@
 #define PXWIDTH 320				// Capture resolution, change this to match the output 
 #define PXHEIGHT 240			// of `v4l2-ctl -d <n> --all | grep Bounds` if it fails
 
-// Global variables
-uint8_t *buffer;
-int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5;
+// Global variables for options only
+int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5, oneshot_flag, help_flag;
 float multiplier = 1;
-static int oneshot_flag, help_flag;
 char *device;
 
 // find out if we have any screw-ups while doing ioctl()
@@ -46,7 +44,7 @@ void setbacklight(float value) {
 }
 
 // Get brightness of image from YUYV buffer
-float getbrightness() {
+float getbrightness(uint8_t* buffer) {
 	int bignumber = 0;
 	float returnval;
 	for (int i = 0; i < totalpixels; i+=2) {
@@ -118,6 +116,7 @@ void getoptions(int argc, char** argv) {
 }
 
 int main(int argc, char **argv) {
+	uint8_t *buffer;
 	float brightness, xstate, offset = 1;
 
 	// Get options
@@ -218,7 +217,7 @@ int main(int argc, char **argv) {
 		 native method for changing the xbacklight state later*/
 
 		// get and set brightness
-		brightness = getbrightness()*offset;
+		brightness = getbrightness(buffer)*offset;
 		setbacklight(brightness);
 
 		sleep(time);
