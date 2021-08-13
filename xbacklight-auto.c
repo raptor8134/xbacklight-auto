@@ -16,7 +16,7 @@
 #define PXHEIGHT 240			// of `v4l2-ctl -d <n> --all | grep Bounds` if it fails
 
 // Global variables for options only
-int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5, oneshot_flag, help_flag;
+int totalpixels = PXWIDTH*PXHEIGHT, minbright = 1, time = 5, fade = 500, oneshot_flag, help_flag;
 float multiplier = 1;
 char *device;
 
@@ -37,9 +37,9 @@ float getbacklight() {
 	return retval;
 }
 
-void setbacklight(float value) {
+void setbacklight(float value, int time) {
 	char cmd[64];
-	sprintf(cmd, "xbacklight -set %f", value);
+	sprintf(cmd, "xbacklight -set %f -time %i", value, time);
 	system(cmd);
 }
 
@@ -63,6 +63,7 @@ usage: xbacklight-auto [options]\n\
   options:\n\
     -h | --help                    display this help\n\
     -d | --device </dev/videoN>    video device to capture from (default /dev/video0)\n\
+    -f | --fade <milliseconds>     time to fade between brightnesses (defaults 500)\n\
     -m | --minimum <percentage>    minimum possible brightness\n\
     -o | --oneshot                 run once and exit\n\
     -t | --time <seconds>          time between samples/sets (works best when ≥1)\n\
@@ -81,30 +82,34 @@ void getoptions(int argc, char** argv) {
 			{"multiplier"	, required_argument, 0, 'x'},
 			{"time"			, required_argument, 0, 't'},
 			{"device"		, required_argument, 0, 'd'},
+			{"fade"			, required_argument, 0, 'f'},
 		};
 
 		int option_index = 0;
-		c = getopt_long(argc, argv, "m:t:x:oh", long_options, &option_index);
+		c = getopt_long(argc, argv, "m:t:x:ohf:", long_options, &option_index);
 
 		if (c == -1) { break; }
 
 		switch(c) {
 			case 0:		//do nothing
 				break;
-			case 't':	// time
+			case 't': // time
 				time = atoi(optarg);
 				break;
-			case 'x':	//multiplier
+			case 'x': //multiplier
 				multiplier *=atof(optarg);
 				break;
-			case 'm':	//minbright	
+			case 'm': //minbright	
 				minbright = atoi(optarg);
 				break;
 			case 'o': // oneshot
 				oneshot_flag = 1;
 				break;
-			case 'd': // oneshot
+			case 'd': // device
 				device = optarg;
+				break;
+			case 'f': // fade
+				fade = atoi(optarg);
 				break;
 			case 'h': // help 
 				help_flag = 1;
@@ -218,7 +223,7 @@ int main(int argc, char **argv) {
 
 		// get and set brightness
 		brightness = getbrightness(buffer)*offset;
-		setbacklight(brightness);
+		setbacklight(brightness, fade);
 
 		sleep(time);
 
