@@ -133,6 +133,9 @@ int main(int argc, char **argv) {
 	}
 	
 	int fd = camera_init(device, PXWIDTH, PXHEIGHT);
+	if (fd == -1) {
+		return 1;
+	}
 
 	// main loop
 	do {

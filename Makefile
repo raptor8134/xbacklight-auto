@@ -13,8 +13,9 @@ test:
 	@ for header in $(DEPS); do printf "found "; ls /usr/include/$$header; done
 	@ echo "All dependencies satisfied." 
 clean: 
-	@rm $(NAME)
+	rm *.o
+	rm $(NAME)
 install:
-	@install $(NAME) $(DESTDIR)/$(PREFIX)/$(NAME)
+	install $(NAME) $(DESTDIR)/$(PREFIX)/$(NAME)
 uninstall:
-	@rm $(DESTDIR)/$(PREFIX)/$(NAME)
+	rm $(DESTDIR)/$(PREFIX)/$(NAME)
