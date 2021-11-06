@@ -147,6 +147,9 @@ int main(int argc, char **argv) {
 		brightness = getbrightness(buffer)*offset;
 		setbacklight(brightness, fade);
 
+		// unmap v4l2 buffer from system memory
+		munmap(mybuffer.buffer, mybuffer.length);
+		
 		sleep(time);
 
 		// get offset as a multiplier
