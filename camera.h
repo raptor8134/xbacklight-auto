@@ -4,6 +4,7 @@
 struct getbuf_return {
 	uint8_t	*buffer;
 	int 	code;
+	int 	length;
 };
 
 extern int camera_init(char* device, int PXWIDTH, int PXHEIGHT);

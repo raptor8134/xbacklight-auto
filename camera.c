@@ -74,6 +74,8 @@ struct getbuf_return get_buffer(int fd) {
 	return_struct.buffer = mmap (NULL, buf.length, PROT_READ | PROT_WRITE,\
 		MAP_SHARED, fd, buf.m.offset);
 
+	return_struct.length = buf.length;
+
 	// Consoom frame and get excited for next frame
 	if (-1 == xioctl(fd, VIDIOC_STREAMON, &buf.type)) {
 		perror("Starting capture");
