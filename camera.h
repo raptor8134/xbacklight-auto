@@ -8,6 +8,7 @@ struct getbuf_return {
 };
 
 extern int camera_init(char* device, int PXWIDTH, int PXHEIGHT);
+extern int camera_close(int fd);
 
 extern struct getbuf_return get_buffer(int fd);
 

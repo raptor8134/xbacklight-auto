@@ -2,6 +2,7 @@
 #include <sys/mman.h>			// mmap() function
 #include <sys/ioctl.h>			// interface with V4L2 
 #include <fcntl.h>				// open() function
+#include <unistd.h>				// close() function
 #include <errno.h>				// Error handling
 #include <stdio.h>				//
 #include <stdint.h>				// uint8_t for the buffer
@@ -57,6 +58,20 @@ int camera_init(char* device, int PXWIDTH, int PXHEIGHT) {
 
 	return fd;
 }
+
+
+int camera_close(int fd) {
+	// close camera device
+	int ret = close(fd);
+	if (ret == -1) 
+	{
+		perror("Error closing camera");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 struct getbuf_return get_buffer(int fd) {
 	struct getbuf_return return_struct;

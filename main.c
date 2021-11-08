@@ -21,7 +21,7 @@ char *device;
 
 float getbacklight() {
 	FILE *pipe = popen("xbacklight -get", "r");
-	char *temp = malloc(16);
+	char temp[16];
 	fscanf(pipe, "%s", temp);
 	float retval = atof(temp);
 	pclose(pipe);
@@ -161,6 +161,9 @@ int main(int argc, char **argv) {
 	}	
 	while (oneshot_flag != 1);
 
-	// Never gets used lmao
-	return 0;
+	// close camera connection
+	int ret = camera_close(fd);
+
+	// returns 0 if camera_close was successful, else -1
+	return ret;
 }
