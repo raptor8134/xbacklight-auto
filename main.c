@@ -115,6 +115,8 @@ int main(int argc, char **argv) {
 	float brightness, xstate, offset = 1;
 	uint8_t *buffer;
 	int buf_addr;
+	int fd;
+	struct getbuf_return mybuffer;
 
 	// Get options
 	getoptions(argc, argv);
@@ -132,27 +134,31 @@ int main(int argc, char **argv) {
 		device = "/dev/video0";
 	}
 	
-	int fd = camera_init(device, PXWIDTH, PXHEIGHT);
-	if (fd == -1) {
-		return 1;
-	}
-
 	// main loop
 	do {
-		struct getbuf_return mybuffer = get_buffer(fd);
-		if (mybuffer.code != 0) {
-			return 1;
+		fd = camera_init(device, PXWIDTH, PXHEIGHT);
+		if (fd == -1) {
+			//camera_close(fd);
+			printf("bruh1\n");
 		} else {
-			buffer = mybuffer.buffer;
+			mybuffer = get_buffer(fd);
+			if (mybuffer.code != 0) {
+				camera_close(fd);
+				munmap(mybuffer.buffer, mybuffer.length);
+				printf("bruh2\n");
+			} else {
+				buffer = mybuffer.buffer;
+
+				camera_close(fd);
+
+				// get and set brightness
+				brightness = getbrightness(buffer)*offset;
+				setbacklight(brightness, fade);
+
+				// unmap v4l2 buffer from system memory
+				munmap(mybuffer.buffer, mybuffer.length);
+			}
 		}
-
-		// get and set brightness
-		brightness = getbrightness(buffer)*offset;
-		setbacklight(brightness, fade);
-
-		// unmap v4l2 buffer from system memory
-		munmap(mybuffer.buffer, mybuffer.length);
-		
 		sleep(time);
 
 		// get offset as a multiplier
