@@ -137,22 +137,18 @@ int main(int argc, char **argv) {
 	// main loop
 	do {
 		fd = camera_init(device, PXWIDTH, PXHEIGHT);
-		if (fd == -1) {
-			//camera_close(fd);
-			printf("bruh1\n");
-		} else {
+
+		if (fd != -1) {
 			mybuffer = get_buffer(fd);
+			
 			if (mybuffer.code != 0) {
 				camera_close(fd);
 				munmap(mybuffer.buffer, mybuffer.length);
-				printf("bruh2\n");
 			} else {
-				buffer = mybuffer.buffer;
-
 				camera_close(fd);
 
 				// get and set brightness
-				brightness = getbrightness(buffer)*offset;
+				brightness = getbrightness(mybuffer.buffer)*offset;
 				setbacklight(brightness, fade);
 
 				// unmap v4l2 buffer from system memory
